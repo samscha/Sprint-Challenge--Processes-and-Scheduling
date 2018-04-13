@@ -162,6 +162,22 @@ int main(void)
 
     /*                                                                        */
 
+    int piped = 1;
+    char *p1;
+    char *p2;
+
+    for (int i = 1; i < args_count; i++) /* i = 0 is the command */
+    {
+      if (strcmp(args[i], "|") == 0)
+      {
+        piped = 0;
+
+        break;
+      }
+    }
+
+    /*                                                                        */
+
     int rc = fork();
 
     if (rc < 0)
@@ -175,6 +191,29 @@ int main(void)
       {
         int fd = open(file_name, O_CREAT | O_WRONLY | O_APPEND);
         dup2(fd, 1);
+      }
+
+      if (piped == 0)
+      {
+        int p[2];
+
+        if (pipe(p) < 0)
+        {
+          fprintf(stderr, "pipe failed\n");
+          exit(1);
+        }
+
+        int rc2 = fork();
+
+        if (rc2 < 0)
+        {
+          fprintf(stderr, "child fork() failed\n");
+          exit(1);
+        }
+        else if (rc2 == 0)
+        {
+          // implement
+        }
       }
 
       execvp(args[0], args);
