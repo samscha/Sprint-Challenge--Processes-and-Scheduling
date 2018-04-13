@@ -126,6 +126,20 @@ int main(void)
        is run. It's just a change in file pointing.
      */
 
+    int waiting = 1;
+
+    if (strcmp(args[args_count - 1], "&") == 0)
+    {
+      args[args_count - 1] = NULL;
+      waiting = 0;
+
+      if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) /* http://www.microhowto.info/howto/reap_zombie_processes_using_a_sigchld_handler.html */
+      {
+        perror(0);
+        exit(1);
+      }
+    }
+
     int rc = fork();
 
     if (rc < 0)
@@ -135,19 +149,12 @@ int main(void)
     }
     else if (rc == 0)
     {
-      if (strcmp(args[args_count - 1], "&") == 0)
-        args[args_count - 1] = NULL;
-
       execvp(args[0], args);
     }
-    if (strcmp(args[args_count - 1], "&") != 0)
+
+    if (waiting > 0)
       waitpid(rc, NULL, 0);
 
-    if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) /* http://www.microhowto.info/howto/reap_zombie_processes_using_a_sigchld_handler.html */
-    {
-      perror(0);
-      exit(1);
-    }
     /* What happens if you don't do this? */
     /* If we don't reap zombie processes, then they will never be offloaded
          from main mem. These processes will be "exit"ed but the process table
