@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
 
 #define PROMPT "lambda-shell$ "
 
@@ -139,20 +140,20 @@ int main(void)
 
       execvp(args[0], args);
     }
-    else
-    {
-      if (strcmp(args[args_count - 1], "&") != 0)
-        waitpid(rc, NULL, 0);
+    if (strcmp(args[args_count - 1], "&") != 0)
+      waitpid(rc, NULL, 0);
 
-      while (waitpid(-1, NULL, WNOHANG) > 0)
-        ;
-      /* What happens if you don't do this? */
-      /* If we don't reap zombie processes, then they will never be offloaded
+    if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) /* http://www.microhowto.info/howto/reap_zombie_processes_using_a_sigchld_handler.html */
+    {
+      perror(0);
+      exit(1);
+    }
+    /* What happens if you don't do this? */
+    /* If we don't reap zombie processes, then they will never be offloaded
          from main mem. These processes will be "exit"ed but the process table
          will still show them. This happens because the parent process never
          reads the child's (now zombie's) exit code (via `wait()`).
       */
-    }
   }
 
   return 0;
