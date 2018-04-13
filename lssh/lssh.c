@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #define PROMPT "lambda-shell$ "
 
 #define MAX_TOKENS 100
 #define COMMANDLINE_BUFSIZE 1024
-#define DEBUG 1 // Set to 1 to turn on some debugging output, or 0 to turn off
+#define DEBUG 0 // Set to 1 to turn on some debugging output, or 0 to turn off
 
 /**
  * Parse the command line.
@@ -107,6 +108,18 @@ int main(void)
 #endif
 
     /* Add your code for implementing the shell's logic here */
+    if (strcmp(args[0], "cd") == 0)
+    {
+      if (args_count == 2)
+      {
+
+        if (chdir(args[1]) == -1)
+          perror("chdir");
+      }
+
+      continue;
+    }
+
     int rc = fork();
 
     if (rc < 0)
