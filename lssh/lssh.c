@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #define PROMPT "lambda-shell$ "
 
@@ -126,6 +127,8 @@ int main(void)
        is run. It's just a change in file pointing.
      */
 
+    /*                                                                        */
+
     int waiting = 1;
 
     if (strcmp(args[args_count - 1], "&") == 0)
@@ -140,6 +143,25 @@ int main(void)
       }
     }
 
+    /*                                                                        */
+
+    int write_also = 1;
+    char file_name[512];
+
+    for (int i = 1; i < args_count; i++) /* i = 0 is the command */
+    {
+      if (strcmp(args[i], ">") == 0)
+      {
+        strcpy(file_name, args[i + 1]);
+        args[i] = NULL;
+        write_also = 0;
+
+        break;
+      }
+    }
+
+    /*                                                                        */
+
     int rc = fork();
 
     if (rc < 0)
@@ -149,6 +171,12 @@ int main(void)
     }
     else if (rc == 0)
     {
+      if (write_also == 0)
+      {
+        int fd = open(file_name, O_CREAT | O_WRONLY | O_APPEND);
+        dup2(fd, 1);
+      }
+
       execvp(args[0], args);
     }
 
