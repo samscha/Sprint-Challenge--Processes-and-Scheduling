@@ -119,6 +119,11 @@ int main(void)
 
       continue;
     }
+    /* Why is cd built into the shell? Why can't it run as an external command? */
+    /* cd is built into the shell because cd is just a pointer to an array 
+       (in this case, persistent storage of laptop/computer). No shell command
+       is run. It's just a change in file pointing.
+     */
 
     int rc = fork();
 
@@ -129,11 +134,24 @@ int main(void)
     }
     else if (rc == 0)
     {
+      if (strcmp(args[args_count - 1], "&") == 0)
+        args[args_count - 1] = NULL;
+
       execvp(args[0], args);
     }
     else
     {
-      waitpid(rc, NULL, 0);
+      if (strcmp(args[args_count - 1], "&") != 0)
+        waitpid(rc, NULL, 0);
+
+      while (waitpid(-1, NULL, WNOHANG) > 0)
+        ;
+      /* What happens if you don't do this? */
+      /* If we don't reap zombie processes, then they will never be offloaded
+         from main mem. These processes will be "exit"ed but the process table
+         will still show them. This happens because the parent process never
+         reads the child's (now zombie's) exit code (via `wait()`).
+      */
     }
   }
 
