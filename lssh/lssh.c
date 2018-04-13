@@ -162,6 +162,7 @@ int main(void)
 
     /*                                                                        */
 
+    char **args_pipe;
     int piped = 1;
     int pipe_i = -1;
     char cmd1[512];
@@ -171,8 +172,10 @@ int main(void)
     {
       if (strcmp(args[i], "|") == 0)
       {
-        piped = 0;
-        pipe_i = i;
+        args_pipe = args + 1 + i;
+        args[i] = NULL;
+        // piped = 0;
+        // pipe_i = i;
 
         // for (int j = 0; j <= i; j++)
         // {
@@ -203,7 +206,7 @@ int main(void)
     if (rc < 0)
     {
       fprintf(stderr, "fork() failed\n");
-      exit(1);
+      continue;
     }
     else if (rc == 0)
     {
@@ -213,14 +216,15 @@ int main(void)
         dup2(fd, 1);
       }
 
-      if (piped == 0)
+      // if (piped == 0)
+      if (args_pipe != NULL)
       {
-        int p[2];
+        int fds[2];
 
-        if (pipe(p) < 0)
+        if (pipe(fds) < 0)
         {
           fprintf(stderr, "pipe failed\n");
-          exit(1);
+          continue;
         }
 
         int rc2 = fork();
@@ -228,17 +232,28 @@ int main(void)
         if (rc2 < 0)
         {
           fprintf(stderr, "child fork() failed\n");
-          exit(1);
+          continue;
         }
         else if (rc2 == 0)
         {
-          // IMPLEMENT STILL
+          dup2(fds[1], 1);
+          close(fds[0]); /* close read end */
+
+          execvp(args[0], args);
+          perror("exec failed");
         }
 
-        continue;
+        waitpid(rc2, NULL, 0);
+
+        dup2(fds[0], 0);
+        close(fds[1]); /* close write end */
+
+        execvp(args_pipe[0], args_pipe);
+        perror("exec failed");
       }
 
       execvp(args[0], args);
+      perror("exec failed");
     }
 
     if (waiting > 0)
