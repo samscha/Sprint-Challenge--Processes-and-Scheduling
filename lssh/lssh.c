@@ -163,14 +163,34 @@ int main(void)
     /*                                                                        */
 
     int piped = 1;
-    char *p1;
-    char *p2;
+    int pipe_i = -1;
+    char cmd1[512];
+    char cmd2[512];
 
     for (int i = 1; i < args_count; i++) /* i = 0 is the command */
     {
       if (strcmp(args[i], "|") == 0)
       {
         piped = 0;
+        pipe_i = i;
+
+        // for (int j = 0; j <= i; j++)
+        // {
+        //   if (j == 0)
+        //     strcpy(cmd1, args[j]);
+        //   strcat(cmd1, " ");
+        //   if (j != 0)
+        //     strcat(cmd1, args[j]);
+        // }
+
+        // for (int j = i; j < args_count; j++)
+        // {
+        //   if (j == i)
+        //     strcpy(cmd2, args[j]);
+        //   strcat(cmd1, " ");
+        //   if (j != i)
+        //     strcat(cmd2, args[j]);
+        // }
 
         break;
       }
@@ -212,8 +232,10 @@ int main(void)
         }
         else if (rc2 == 0)
         {
-          // implement
+          // IMPLEMENT STILL
         }
+
+        continue;
       }
 
       execvp(args[0], args);
